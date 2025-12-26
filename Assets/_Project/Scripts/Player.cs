@@ -14,7 +14,6 @@ public class Player : MonoBehaviour
     #region Serialized Private Fields
     [Header("References")]
     [SerializeField] private Rigidbody2D rb;
-    [SerializeField] private Animator animator;
 
     [Header("Run Fields")]
     [SerializeField] private float moveSpeed;
@@ -30,16 +29,12 @@ public class Player : MonoBehaviour
     private GameInput _gameInput;
     private InputAction _jumpAction;
     private InputAction _beginGameAction;
-
-    [Header("Run Fields")]
-    private const string IS_RUNNING_ANIM_NAME = "isRunning";
-    private const string X_VELOCITY_ANIM_NAME = "xVelocity";
-    private const string Y_VELOCITY_ANIM_NAME = "yVelocity";
-    private const string IS_GROUNDED_ANIM_NAME = "isGrounded";
-    private bool _isPlayerUnlocked = false;
     #endregion
 
     #region Public Properties
+    public float LinearVelocityX { get; private set; }
+    public float LinearVelocityY { get; private set; }
+    public bool IsPlayerUnlocked { get; private set; } = false;
     public bool IsGrounded => Physics2D.Raycast(transform.position, Vector2.down, _groundCheckDistance, _whatIsGround);
     #endregion
 
@@ -65,10 +60,9 @@ public class Player : MonoBehaviour
         _beginGameAction.performed -= OnBeginGamePerformed;
     }
 
-    private void Update()
+    private void FixedUpdate()
     {
-        if (!_isPlayerUnlocked) return;
-        HandleAnimations();
+        if (!IsPlayerUnlocked) return;
         Move();
     }
 
@@ -86,18 +80,12 @@ public class Player : MonoBehaviour
     private void Move()
     {
         rb.linearVelocity = new Vector2(moveSpeed, rb.linearVelocityY);
-    }
-
-    private void HandleAnimations()
-    {
-        animator.SetBool(IS_GROUNDED_ANIM_NAME, IsGrounded);
-        animator.SetFloat(X_VELOCITY_ANIM_NAME, rb.linearVelocityX);
-        animator.SetFloat(Y_VELOCITY_ANIM_NAME, rb.linearVelocityY);
+        SetLinearVelocityProperties();
     }
 
     private void OnJumpPerformed(InputAction.CallbackContext obj)
     {
-        if (!_isPlayerUnlocked) return;
+        if (!IsPlayerUnlocked) return;
         if (!IsGrounded) return;
 
         rb.linearVelocityY = jumpForce;
@@ -105,8 +93,14 @@ public class Player : MonoBehaviour
 
     private void OnBeginGamePerformed(InputAction.CallbackContext obj)
     {
-        _isPlayerUnlocked = true;
+        IsPlayerUnlocked = true;
         _beginGameAction.Disable();
+    }
+
+    private void SetLinearVelocityProperties()
+    {
+        LinearVelocityX = rb.linearVelocityX;
+        LinearVelocityY = rb.linearVelocityY;
     }
     #endregion
 }
